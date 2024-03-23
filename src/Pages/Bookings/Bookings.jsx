@@ -1,19 +1,27 @@
-import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../AuthProvider/AuthProvider";
+import { useEffect, useState } from "react";
+// import { AuthContext } from "../../AuthProvider/AuthProvider";
 import Booking from "./Booking";
 import Swal from "sweetalert2";
+import useAuth from "../../hooks/useAuth";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
 
 const Bookings = () => {
 
-    const { user } = useContext(AuthContext);
+    // const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const [bookings, setBookings] = useState([]);
+    const axiosSecure = useAxiosSecure();
 
-    const url = `http://localhost:5000/bookings?email=${user?.email}`;
+    // const url = `https://car-doctor-server-ten-iota.vercel.app/bookings?email=${user?.email}`;
+    const url = `/bookings?email=${user?.email}`
     useEffect(() => {
-        fetch(url)
-            .then(res => res.json())
-            .then(data => setBookings(data))
-    }, [url]);
+        // axios.get(url,{withCredentials: true})
+        axiosSecure.get(url)
+            .then(res => setBookings(res.data))
+        // fetch(url)
+        //     .then(res => res.json())
+        //     .then(data => setBookings(data))
+    }, [axiosSecure, url]);
 
     const handleDelete = id => {
         Swal.fire({
@@ -27,7 +35,7 @@ const Bookings = () => {
         })
             .then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`http://localhost:5000/bookings/${id}`, {
+                    fetch(`https://car-doctor-server-ten-iota.vercel.app/bookings/${id}`, {
                         method: 'DELETE'
                     })
                         .then(res => res.json())
@@ -47,20 +55,20 @@ const Bookings = () => {
     }
 
     const handleConfirmButton = id => {
-        fetch(`http://localhost:5000/bookings/${id}`,{
+        fetch(`https://car-doctor-server-ten-iota.vercel.app/bookings/${id}`, {
             method: 'PATCH',
             headers: {
                 'content-type': 'application/json'
             },
-            body: JSON.stringify({status: 'confirm'})
+            body: JSON.stringify({ status: 'confirm' })
         })
             .then(res => res.json())
             .then(data => {
                 if (data.modifiedCount > 0) {
-                    const remaining = bookings.filter(booking=>booking._id !== id);
-                    const updated = bookings.find(booking=>booking._id === id);
+                    const remaining = bookings.filter(booking => booking._id !== id);
+                    const updated = bookings.find(booking => booking._id === id);
                     updated.status = 'confirm'
-                    const newBookings = [updated,...remaining];
+                    const newBookings = [updated, ...remaining];
                     setBookings(newBookings);
                 }
             })
